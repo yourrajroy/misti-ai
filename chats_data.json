@@ -1,1 +1,48 @@
-{}
+{
+  "fb8897c5-0eb0-4277-ac68-1f252a86faa6": {
+    "id": "fb8897c5-0eb0-4277-ac68-1f252a86faa6",
+    "title": "Hi",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Hi",
+        "timestamp": "2026-06-01T20:08:22.313462"
+      },
+      {
+        "role": "assistant",
+        "content": "Sorry, I encountered an error: Connection error.",
+        "timestamp": "2026-06-01T20:08:31.698867"
+      }
+    ],
+    "created_at": "2026-06-01T20:08:22.313403",
+    "updated_at": "2026-06-01T20:08:31.699006"
+  },
+  "974a9bec-2da4-43ca-831c-e4d53d970da0": {
+    "id": "974a9bec-2da4-43ca-831c-e4d53d970da0",
+    "title": "Hi",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Hi",
+        "timestamp": "2026-06-01T20:09:25.128643"
+      },
+      {
+        "role": "assistant",
+        "content": "It's nice to meet you. Is there something I can help you with, or would you like to chat?",
+        "timestamp": "2026-06-01T20:09:31.720079"
+      },
+      {
+        "role": "user",
+        "content": "Yes",
+        "timestamp": "2026-06-01T20:09:40.272774"
+      },
+      {
+        "role": "assistant",
+        "content": "I'd be happy to chat with you. What's on your mind? Do you have a specific topic you'd like to discuss, or are you just looking for some general conversation? I can talk about a wide range of things, from hobbies and interests to movies, books, and current events. Where would you like to start?",
+        "timestamp": "2026-06-01T20:09:46.885479"
+      }
+    ],
+    "created_at": "2026-06-01T20:09:25.128453",
+    "updated_at": "2026-06-01T20:09:46.885575"
+  }
+}

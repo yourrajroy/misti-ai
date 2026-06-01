@@ -250,7 +250,5 @@ def send_message():
 
 
 if __name__ == "__main__":
-    print("Starting Vertex AI Chatbot...")
-    print("Make sure GROQ_API_KEY is set!")
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=False)
