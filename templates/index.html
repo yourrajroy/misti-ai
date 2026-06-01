@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Vertex AI — Your Smart Assistant</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet" />
+</head>
+<body>
+
+  <!-- Sidebar Overlay -->
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-logo">
+        <span class="logo-icon">⬡</span>
+        <span class="logo-text">Vertex AI</span>
+      </div>
+      <button class="sidebar-close" id="sidebarClose" aria-label="Close sidebar">✕</button>
+    </div>
+
+    <button class="new-chat-btn" id="newChatBtn">
+      <span class="btn-icon">＋</span>
+      New Chat
+    </button>
+
+    <div class="sidebar-section-label">Recent Chats</div>
+
+    <div class="chat-history" id="chatHistory">
+      <div class="chat-history-empty" id="historyEmpty">
+        <span>💬</span>
+        <p>No previous chats</p>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main App -->
+  <div class="app-wrapper">
+
+    <!-- Header -->
+    <header class="app-header">
+      <button class="hamburger-btn" id="hamburgerBtn" aria-label="Open menu">
+        <span></span><span></span><span></span>
+      </button>
+      <div class="header-info">
+        <h1 class="header-title">Vertex AI</h1>
+        <p class="header-subtitle">your smart assistant</p>
+      </div>
+      <div class="header-status">
+        <span class="status-dot"></span>
+      </div>
+    </header>
+
+    <!-- Chat Area -->
+    <main class="chat-area" id="chatArea">
+      <!-- Welcome Screen -->
+      <div class="welcome-screen" id="welcomeScreen">
+        <div class="welcome-icon">⬡</div>
+        <h2 class="welcome-title">Hello! I'm Vertex AI</h2>
+        <p class="welcome-sub">Your smart assistant, ready to help with anything.</p>
+        <div class="welcome-chips">
+          <button class="chip" onclick="fillInput('Explain quantum computing simply')">⚛️ Explain quantum computing</button>
+          <button class="chip" onclick="fillInput('Write a short poem about the ocean')">🌊 Write a poem</button>
+          <button class="chip" onclick="fillInput('What are the best productivity tips?')">💡 Productivity tips</button>
+          <button class="chip" onclick="fillInput('Help me debug my Python code')">🐍 Debug Python code</button>
+        </div>
+      </div>
+
+      <!-- Messages Container -->
+      <div class="messages-container" id="messagesContainer"></div>
+
+      <!-- Typing Indicator -->
+      <div class="typing-indicator" id="typingIndicator" style="display:none;">
+        <div class="typing-bubble">
+          <span></span><span></span><span></span>
+        </div>
+        <span class="typing-label">Vertex AI is thinking...</span>
+      </div>
+    </main>
+
+    <!-- Image Preview Bar -->
+    <div class="image-preview-bar" id="imagePreviewBar" style="display:none;">
+      <div class="image-preview-inner">
+        <img src="" alt="Attached image" id="imagePreviewThumb" />
+        <div class="image-preview-info">
+          <span class="image-preview-name" id="imagePreviewName">image.jpg</span>
+          <span class="image-preview-size" id="imagePreviewSize">0 KB</span>
+        </div>
+        <button class="image-remove-btn" id="imageRemoveBtn" aria-label="Remove image">✕</button>
+      </div>
+    </div>
+
+    <!-- Input Area -->
+    <footer class="input-area">
+      <div class="input-box">
+        <label class="attach-btn" for="imageInput" aria-label="Attach image">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
+          </svg>
+        </label>
+        <input type="file" id="imageInput" accept="image/*" style="display:none;" />
+        <textarea
+          id="messageInput"
+          placeholder="Ask anything..."
+          rows="1"
+          autocomplete="off"
+          spellcheck="true"
+        ></textarea>
+        <button class="send-btn" id="sendBtn" aria-label="Send message" disabled>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+          </svg>
+        </button>
+      </div>
+    </footer>
+
+  </div>
+
+  <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
