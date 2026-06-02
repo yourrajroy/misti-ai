@@ -1,5 +1,5 @@
 /* ==========================================
-   VERTEX AI CHATBOT — script.js
+   MISTI AI CHATBOT — script.js
    ========================================== */
 
 "use strict";
