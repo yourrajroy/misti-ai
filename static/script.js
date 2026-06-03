@@ -1,15 +1,14 @@
 /* ==========================================
-   MISTI AI CHATBOT — script.js
+   MISTI AI CHATBOT — script.js v2
    ========================================== */
-
 "use strict";
 
-// ── State ────────────────────────────────────────────────────────────────────
-let currentChatId  = null;
-let attachedImage  = null;   // { dataUrl, name, size }
-let isLoading      = false;
+// ── State ─────────────────────────────────────────────────────────────────────
+let currentChatId = null;
+let attachedImage = null;
+let isLoading     = false;
 
-// ── DOM refs ─────────────────────────────────────────────────────────────────
+// ── DOM Refs ──────────────────────────────────────────────────────────────────
 const hamburgerBtn      = document.getElementById("hamburgerBtn");
 const sidebar           = document.getElementById("sidebar");
 const sidebarOverlay    = document.getElementById("sidebarOverlay");
@@ -22,6 +21,7 @@ const welcomeScreen     = document.getElementById("welcomeScreen");
 const messagesContainer = document.getElementById("messagesContainer");
 const typingIndicator   = document.getElementById("typingIndicator");
 const chatArea          = document.getElementById("chatArea");
+const scrollBottomBtn   = document.getElementById("scrollBottomBtn");
 
 const messageInput      = document.getElementById("messageInput");
 const sendBtn           = document.getElementById("sendBtn");
@@ -33,8 +33,10 @@ const imagePreviewName  = document.getElementById("imagePreviewName");
 const imagePreviewSize  = document.getElementById("imagePreviewSize");
 const imageRemoveBtn    = document.getElementById("imageRemoveBtn");
 
+const copyToast         = document.getElementById("copyToast");
 
-// ── Sidebar ──────────────────────────────────────────────────────────────────
+
+// ── Sidebar ───────────────────────────────────────────────────────────────────
 function openSidebar() {
   sidebar.classList.add("open");
   sidebarOverlay.classList.add("active");
@@ -46,27 +48,24 @@ function closeSidebar() {
   sidebarOverlay.classList.remove("active");
   document.body.style.overflow = "";
 }
-
 hamburgerBtn.addEventListener("click", openSidebar);
 sidebarClose.addEventListener("click", closeSidebar);
 sidebarOverlay.addEventListener("click", closeSidebar);
 
 
-// ── Chat History ─────────────────────────────────────────────────────────────
+// ── Chat History ──────────────────────────────────────────────────────────────
 async function loadChatHistory() {
   try {
     const res  = await fetch("/api/chats");
     const data = await res.json();
     renderChatHistory(data.chats || []);
   } catch (e) {
-    console.error("Failed to load chat history", e);
+    console.error("Failed to load history", e);
   }
 }
 
 function renderChatHistory(chats) {
-  // Clear existing items (but keep the empty-state div)
-  Array.from(chatHistory.querySelectorAll(".chat-history-item"))
-       .forEach(el => el.remove());
+  Array.from(chatHistory.querySelectorAll(".chat-history-item")).forEach(el => el.remove());
 
   if (chats.length === 0) {
     historyEmpty.style.display = "flex";
@@ -79,20 +78,37 @@ function renderChatHistory(chats) {
     item.className = "chat-history-item" + (chat.id === currentChatId ? " active" : "");
     item.dataset.chatId = chat.id;
 
+    // Info section
+    const info = document.createElement("div");
+    info.className = "chat-item-info";
+
     const title = document.createElement("span");
     title.className = "chat-item-title";
     title.textContent = chat.title || "New Chat";
 
+    const meta = document.createElement("div");
+    meta.className = "chat-item-meta";
+
+    const count = document.createElement("span");
+    count.className = "chat-item-count";
+    const msgCount = chat.message_count || 0;
+    count.textContent = msgCount === 0 ? "Empty" : `${msgCount} message${msgCount !== 1 ? "s" : ""}`;
+
+    meta.appendChild(count);
+    info.appendChild(title);
+    info.appendChild(meta);
+
+    // Delete button
     const del = document.createElement("button");
     del.className = "chat-item-delete";
-    del.textContent = "🗑";
     del.title = "Delete chat";
+    del.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>`;
     del.addEventListener("click", async (e) => {
       e.stopPropagation();
       await deleteChat(chat.id);
     });
 
-    item.appendChild(title);
+    item.appendChild(info);
     item.appendChild(del);
     item.addEventListener("click", () => loadChat(chat.id));
     chatHistory.appendChild(item);
@@ -113,7 +129,7 @@ async function loadChat(chatId) {
     messages.forEach(msg => renderMessage(msg.role, msg.content, msg.timestamp, msg.image));
 
     closeSidebar();
-    scrollToBottom();
+    scrollToBottom(true);
   } catch (e) {
     console.error("Failed to load chat", e);
   }
@@ -122,17 +138,15 @@ async function loadChat(chatId) {
 async function deleteChat(chatId) {
   try {
     await fetch(`/api/chats/${chatId}`, { method: "DELETE" });
-    if (chatId === currentChatId) {
-      startNewChat();
-    }
+    if (chatId === currentChatId) startNewChat();
     loadChatHistory();
   } catch (e) {
-    console.error("Failed to delete chat", e);
+    console.error("Failed to delete", e);
   }
 }
 
 
-// ── New Chat ─────────────────────────────────────────────────────────────────
+// ── New Chat ──────────────────────────────────────────────────────────────────
 function startNewChat() {
   currentChatId = null;
   clearMessages();
@@ -140,7 +154,6 @@ function startNewChat() {
   closeSidebar();
   messageInput.focus();
 }
-
 newChatBtn.addEventListener("click", startNewChat);
 
 function clearMessages() {
@@ -149,12 +162,28 @@ function clearMessages() {
 }
 
 
+// ── Scroll to Bottom ──────────────────────────────────────────────────────────
+chatArea.addEventListener("scroll", () => {
+  const distFromBottom = chatArea.scrollHeight - chatArea.scrollTop - chatArea.clientHeight;
+  scrollBottomBtn.style.display = distFromBottom > 120 ? "flex" : "none";
+});
+
+scrollBottomBtn.addEventListener("click", () => scrollToBottom(true));
+
+function scrollToBottom(force = false) {
+  requestAnimationFrame(() => {
+    const distFromBottom = chatArea.scrollHeight - chatArea.scrollTop - chatArea.clientHeight;
+    if (force || distFromBottom < 300) {
+      chatArea.scrollTop = chatArea.scrollHeight;
+    }
+  });
+}
+
+
 // ── Message Input ─────────────────────────────────────────────────────────────
 messageInput.addEventListener("input", () => {
-  // Auto-resize
   messageInput.style.height = "auto";
   messageInput.style.height = Math.min(messageInput.scrollHeight, 120) + "px";
-  // Enable/disable send
   updateSendBtn();
 });
 
@@ -170,7 +199,6 @@ function updateSendBtn() {
   const hasImage = attachedImage !== null;
   sendBtn.disabled = isLoading || (!hasText && !hasImage);
 }
-
 sendBtn.addEventListener("click", sendMessage);
 
 
@@ -179,13 +207,11 @@ imageInput.addEventListener("change", (e) => {
   const file = e.target.files[0];
   if (!file) return;
 
-  // Validate: images only (already restricted by accept="image/*" but double check)
   if (!file.type.startsWith("image/")) {
     showToast("Only image files are allowed!");
     imageInput.value = "";
     return;
   }
-  // 10MB limit
   if (file.size > 10 * 1024 * 1024) {
     showToast("Image must be under 10MB");
     imageInput.value = "";
@@ -194,21 +220,17 @@ imageInput.addEventListener("change", (e) => {
 
   const reader = new FileReader();
   reader.onload = (ev) => {
-    attachedImage = {
-      dataUrl: ev.target.result,
-      name:    file.name,
-      size:    file.size
-    };
+    attachedImage = { dataUrl: ev.target.result, name: file.name, size: file.size };
     showImagePreview();
     updateSendBtn();
   };
   reader.readAsDataURL(file);
-  imageInput.value = ""; // allow re-selecting same file
+  imageInput.value = "";
 });
 
 function showImagePreview() {
   if (!attachedImage) return;
-  imagePreviewThumb.src  = attachedImage.dataUrl;
+  imagePreviewThumb.src = attachedImage.dataUrl;
   imagePreviewName.textContent = attachedImage.name;
   imagePreviewSize.textContent = formatBytes(attachedImage.size);
   imagePreviewBar.style.display = "block";
@@ -220,11 +242,10 @@ function clearAttachedImage() {
   imagePreviewThumb.src = "";
   updateSendBtn();
 }
-
 imageRemoveBtn.addEventListener("click", clearAttachedImage);
 
 
-// ── Send Message ─────────────────────────────────────────────────────────────
+// ── Send Message ──────────────────────────────────────────────────────────────
 async function sendMessage() {
   const text = messageInput.value.trim();
   if (isLoading || (!text && !attachedImage)) return;
@@ -232,39 +253,31 @@ async function sendMessage() {
   isLoading = true;
   updateSendBtn();
 
-  // Hide welcome
   welcomeScreen.style.display = "none";
 
-  // Snapshot image before clearing
   const imgSnapshot = attachedImage ? { ...attachedImage } : null;
-
-  // Render user bubble
   const now = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+
   renderMessage("user", text, now, imgSnapshot ? imgSnapshot.dataUrl : null);
 
-  // Clear input
   messageInput.value = "";
   messageInput.style.height = "auto";
   clearAttachedImage();
 
-  // Show typing
   typingIndicator.style.display = "flex";
-  scrollToBottom();
+  scrollToBottom(true);
 
   try {
-    const payload = {
-      chat_id: currentChatId,
-      message: text,
-      image:   imgSnapshot ? imgSnapshot.dataUrl : null
-    };
-
     const res  = await fetch("/api/send", {
       method:  "POST",
       headers: { "Content-Type": "application/json" },
-      body:    JSON.stringify(payload)
+      body:    JSON.stringify({
+        chat_id: currentChatId,
+        message: text,
+        image:   imgSnapshot ? imgSnapshot.dataUrl : null
+      })
     });
     const data = await res.json();
-
     typingIndicator.style.display = "none";
 
     if (data.error) {
@@ -282,7 +295,7 @@ async function sendMessage() {
 
   isLoading = false;
   updateSendBtn();
-  scrollToBottom();
+  scrollToBottom(true);
 }
 
 
@@ -294,7 +307,7 @@ function renderMessage(role, text, timestamp, imageUrl) {
   const bubble = document.createElement("div");
   bubble.className = "bubble";
 
-  // Image (if any)
+  // Attached image (user only)
   if (imageUrl && role === "user") {
     const img = document.createElement("img");
     img.src = imageUrl;
@@ -304,7 +317,7 @@ function renderMessage(role, text, timestamp, imageUrl) {
     bubble.appendChild(img);
   }
 
-  // Text content — parse simple markdown
+  // Text
   if (text) {
     const textDiv = document.createElement("div");
     textDiv.className = "msg-text";
@@ -314,23 +327,34 @@ function renderMessage(role, text, timestamp, imageUrl) {
 
   row.appendChild(bubble);
 
-  // Timestamp + sender
+  // Copy button for AI messages
+  if (role === "ai" && text) {
+    const actions = document.createElement("div");
+    actions.className = "bubble-actions";
+
+    const copyBtn = document.createElement("button");
+    copyBtn.className = "copy-btn";
+    copyBtn.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copy`;
+    copyBtn.addEventListener("click", () => copyText(text, copyBtn));
+    actions.appendChild(copyBtn);
+    row.appendChild(actions);
+  }
+
+  // Meta (time + sender)
   if (timestamp) {
     const meta = document.createElement("div");
-    meta.style.display = "flex";
-    meta.style.flexDirection = "column";
-    meta.style.gap = "1px";
+    meta.className = "msg-meta";
 
     const time = document.createElement("span");
     time.className = "msg-time";
     time.textContent = timestamp;
-    meta.appendChild(time);
 
     const sender = document.createElement("span");
     sender.className = "msg-sender";
-    sender.textContent = role === "user" ? "You" : "AI";
-    meta.appendChild(sender);
+    sender.textContent = role === "user" ? "You" : "Misti AI";
 
+    meta.appendChild(time);
+    meta.appendChild(sender);
     row.appendChild(meta);
   }
 
@@ -339,12 +363,31 @@ function renderMessage(role, text, timestamp, imageUrl) {
 }
 
 
-// ── Markdown Parser (lightweight) ─────────────────────────────────────────────
+// ── Copy Text ─────────────────────────────────────────────────────────────────
+async function copyText(text, btn) {
+  try {
+    await navigator.clipboard.writeText(text);
+    btn.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Copied!`;
+    showCopyToast();
+    setTimeout(() => {
+      btn.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copy`;
+    }, 2000);
+  } catch (e) {
+    showToast("Copy failed — try long-pressing the text");
+  }
+}
+
+function showCopyToast() {
+  copyToast.classList.add("show");
+  setTimeout(() => copyToast.classList.remove("show"), 2000);
+}
+
+
+// ── Markdown Parser ───────────────────────────────────────────────────────────
 function parseMarkdown(text) {
-  // Escape HTML
   let html = escapeHtml(text);
 
-  // Code blocks (```)
+  // Code blocks
   html = html.replace(/```(\w*)\n?([\s\S]*?)```/g, (_, lang, code) => {
     return `<pre><code class="lang-${lang}">${code.trim()}</code></pre>`;
   });
@@ -352,13 +395,13 @@ function parseMarkdown(text) {
   // Inline code
   html = html.replace(/`([^`]+)`/g, "<code>$1</code>");
 
-  // Bold **text** or __text__
+  // Bold
   html = html.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
-  html = html.replace(/__(.+?)__/g, "<strong>$1</strong>");
+  html = html.replace(/__(.+?)__/g,      "<strong>$1</strong>");
 
-  // Italic *text* or _text_
-  html = html.replace(/\*([^*]+)\*/g, "<em>$1</em>");
-  html = html.replace(/_([^_]+)_/g, "<em>$1</em>");
+  // Italic
+  html = html.replace(/\*([^*\n]+)\*/g, "<em>$1</em>");
+  html = html.replace(/_([^_\n]+)_/g,   "<em>$1</em>");
 
   // Headings
   html = html.replace(/^### (.+)$/gm, "<h3>$1</h3>");
@@ -372,18 +415,17 @@ function parseMarkdown(text) {
   html = html.replace(/^---$/gm, "<hr>");
 
   // Unordered lists
-  html = html.replace(/^\* (.+)$/gm, "<li>$1</li>");
-  html = html.replace(/^- (.+)$/gm,  "<li>$1</li>");
+  html = html.replace(/^[\*\-] (.+)$/gm, "<li>$1</li>");
+  html = html.replace(/(<li>[\s\S]*?<\/li>)(\n<li>|$)/g, "$1$2");
   html = html.replace(/(<li>.*<\/li>\n?)+/g, m => `<ul>${m}</ul>`);
 
   // Ordered lists
   html = html.replace(/^\d+\. (.+)$/gm, "<li>$1</li>");
 
-  // Links [text](url)
-  html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g,
-    '<a href="$2" target="_blank" rel="noopener">$1</a>');
+  // Links
+  html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
 
-  // Newlines → <br> (only outside block elements)
+  // Newlines
   html = html.replace(/\n/g, "<br>");
 
   return html;
@@ -398,16 +440,10 @@ function escapeHtml(str) {
 }
 
 
-// ── Utility ───────────────────────────────────────────────────────────────────
-function scrollToBottom() {
-  requestAnimationFrame(() => {
-    chatArea.scrollTop = chatArea.scrollHeight;
-  });
-}
-
+// ── Utilities ─────────────────────────────────────────────────────────────────
 function formatBytes(bytes) {
-  if (bytes < 1024)         return bytes + " B";
-  if (bytes < 1024 * 1024)  return (bytes / 1024).toFixed(1) + " KB";
+  if (bytes < 1024)        return bytes + " B";
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
   return (bytes / (1024 * 1024)).toFixed(1) + " MB";
 }
 
@@ -417,18 +453,16 @@ function fillInput(text) {
   messageInput.focus();
 }
 
-// Simple toast notification
 function showToast(msg) {
   const existing = document.querySelector(".toast");
   if (existing) existing.remove();
-
   const toast = document.createElement("div");
   toast.className = "toast";
   toast.textContent = msg;
   toast.style.cssText = `
     position:fixed;bottom:90px;left:50%;transform:translateX(-50%);
-    background:#333;color:#fff;padding:10px 20px;border-radius:24px;
-    font-size:13px;z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,0.25);
+    background:#1e0a3c;color:#fff;padding:10px 20px;border-radius:24px;
+    font-size:13px;z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,0.3);
     animation:fadeSlideUp 0.3s ease;
   `;
   document.body.appendChild(toast);
