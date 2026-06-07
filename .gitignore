@@ -1,7 +1,4 @@
-# Never commit these
 chats_data.json
-*.pyc
 __pycache__/
+*.pyc
 .env
-.DS_Store
-*.log

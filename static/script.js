@@ -473,3 +473,45 @@ function showToast(msg) {
 // ── Init ──────────────────────────────────────────────────────────────────────
 updateSendBtn();
 messageInput.focus();
+
+
+// ── Auth / User Panel ─────────────────────────────────────────────────────────
+const userAvatar = document.getElementById("userAvatar");
+const userNameEl = document.getElementById("userName");
+const logoutBtn  = document.getElementById("logoutBtn");
+
+async function loadCurrentUser() {
+  try {
+    const res  = await fetch("/api/auth/me");
+    if (res.status === 401) { window.location.href = "/login"; return; }
+    const data = await res.json();
+    if (data.username) {
+      userNameEl.textContent = data.username;
+      userAvatar.textContent = data.username.charAt(0).toUpperCase();
+    }
+  } catch (e) {
+    console.error("Failed to load user", e);
+  }
+}
+
+logoutBtn.addEventListener("click", async () => {
+  try { await fetch("/api/auth/logout", { method: "POST" }); } finally {
+    window.location.href = "/login";
+  }
+});
+
+// Intercept 401 globally (session expired mid-chat)
+const _origFetch = window.fetch;
+window.fetch = async function(...args) {
+  const res = await _origFetch(...args);
+  if (res.status === 401) {
+    try {
+      const data = await res.clone().json();
+      if (data.redirect) { window.location.href = data.redirect; return res; }
+    } catch {}
+    window.location.href = "/login";
+  }
+  return res;
+};
+
+loadCurrentUser();
